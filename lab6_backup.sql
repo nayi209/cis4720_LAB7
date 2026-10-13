@@ -53,39 +53,39 @@ USE cis4720_yourname;
 -- PRIMARY KEY means prod_id must be unique and may never be empty.
 -- ======================================================================
 
-CREATE TABLE PRODUCT (
-    prod_id     INT          NOT NULL,
-    prod_name   VARCHAR(40)  NOT NULL,
-    unit_price  DECIMAL(7,2),
-    added_on    DATE,
-    roast_level VARCHAR(10),
-    PRIMARY KEY (prod_id)
-);
+-- CREATE TABLE PRODUCT (
+--     prod_id     INT          NOT NULL,
+--     prod_name   VARCHAR(40)  NOT NULL,
+--     unit_price  DECIMAL(7,2),
+--     added_on    DATE,
+--     roast_level VARCHAR(10),
+--     PRIMARY KEY (prod_id)
+-- );
 
 
--- ======================================================================
--- SECTION 3. The data
--- Four rows. In lab6 you added the first three by hand, then Antigua Classic
--- came later. The roast_level column was added with ALTER TABLE in lab6 and
--- is simply part of the table here.
--- ======================================================================
+-- -- ======================================================================
+-- -- SECTION 3. The data
+-- -- Four rows. In lab6 you added the first three by hand, then Antigua Classic
+-- -- came later. The roast_level column was added with ALTER TABLE in lab6 and
+-- -- is simply part of the table here.
+-- -- ======================================================================
 
-INSERT INTO PRODUCT VALUES (1,'Yirgacheffe',    18.50,'2026-01-15','Light');
-INSERT INTO PRODUCT VALUES (2,'Huila Supremo',  15.25,'2026-03-02','Medium');
-INSERT INTO PRODUCT VALUES (3,'Cerrado Daily',  12.60,'2026-05-20','Medium');
-INSERT INTO PRODUCT VALUES (4,'Antigua Classic',16.80,'2026-07-04','Medium');
+-- INSERT INTO PRODUCT VALUES (1,'Yirgacheffe',    18.50,'2026-01-15','Light');
+-- INSERT INTO PRODUCT VALUES (2,'Huila Supremo',  15.25,'2026-03-02','Medium');
+-- INSERT INTO PRODUCT VALUES (3,'Cerrado Daily',  12.60,'2026-05-20','Medium');
+-- INSERT INTO PRODUCT VALUES (4,'Antigua Classic',16.80,'2026-07-04','Medium');
 
 
--- ======================================================================
--- SECTION 4. The view
--- A view is a stored SELECT statement that you can query as if it were a
--- table. This one shows only the name and the price, so anyone using it
--- cannot reach the id, the date or the roast level.
--- ======================================================================
+-- -- ======================================================================
+-- -- SECTION 4. The view
+-- -- A view is a stored SELECT statement that you can query as if it were a
+-- -- table. This one shows only the name and the price, so anyone using it
+-- -- cannot reach the id, the date or the roast level.
+-- -- ======================================================================
 
-CREATE VIEW PRODUCT_PRICES AS
-SELECT prod_name, unit_price
-FROM PRODUCT;
+-- CREATE VIEW PRODUCT_PRICES AS
+-- SELECT prod_name, unit_price
+-- FROM PRODUCT;
 
 
 -- ======================================================================
@@ -118,19 +118,94 @@ SHOW FULL TABLES;
 
 
 -- STEP 10. Section 5.1, look at your schema
-
+--shows the current database in use from the full tables
+SELECT DATABASE() AS my_schema;
+SHOW FULL TABLES;
 
 -- STEP 11. Section 5.2, look at the data types
-
+--shows the product tables data types and structure
+describe PRODUCT;
 
 -- STEP 12. Section 5.3, create a table by copying with a subquery
+--A copy of the PRODUCT table using subquery
+CREATE TABLE PRODUCT_COPY AS 
+SELECT prod_id, prod_name, unit_price
+FROM PRODUCT;
 
+SELECT * FROM PRODUCT_COPY;
+
+SHOW CREATE TABLE PRODUCT_COPY;
 
 -- STEP 13. Section 5.4, change the structure of the copy
 
+-- add a new column on the end
+--changes the product_copy table to add a new column called on_sale with a char data type of 1
+ALTER TABLE PRODUCT_COPY ADD COLUMN on_sale CHAR(1);
+
+-- make an existing column wider
+--changes the product_copy table to modify the prod_name column to be a varchar data type of 60 and not null
+ALTER TABLE PRODUCT_COPY MODIFY COLUMN prod_name VARCHAR(60) NOT NULL;
+
+-- put back the primary key the copy did not inherit
+-- adds a primary key to the product_copy table on the prod_id column
+ALTER TABLE PRODUCT_COPY ADD PRIMARY KEY (prod_id);
+DESCRIBE PRODUCT_COPY;
+
+-- insert a row with a NULL in the new column
+INSERT INTO PRODUCT_COPY VALUES (1,'Duplicate',9.99,NULL);
+
+-- delete the culumn you just added, which there is nothing in it
+ALTER TABLE PRODUCT_COPY DROP COLUMN on_sale;
 
 -- STEP 14. Section 5.5, insert, update and delete a row
 
+ --add a new product to the copied table
+INSERT INTO PRODUCT_COPY VALUES (5,'Kenya Peaberry',21.40);
+SELECT * FROM PRODUCT_COPY WHERE prod_id = 5;
+
+-- change the price of that product
+UPDATE PRODUCT_COPY SET unit_price = 22.95 WHERE prod_id = 5;
+SELECT * FROM PRODUCT_COPY WHERE prod_id = 5;
+
+-- remove the product from the copied table
+DELETE FROM PRODUCT_COPY WHERE prod_id = 5;
+--counts the nummberof rows left in the table
+SELECT COUNT(*) AS rows_left FROM PRODUCT_COPY;
 
 -- STEP 15. Section 5.6, create a view and update through it
 
+--creates a view of products that are less than 16.00
+CREATE VIEW CHEAP_PRODUCTS AS
+SELECT prod_id, prod_name, unit_price
+FROM PRODUCT_COPY
+WHERE unit_price < 16.00;
+
+--shows the products that are less than 16.00
+SELECT * FROM CHEAP_PRODUCTS;
+
+
+-- before
+--creates a view of product 3 price before the update
+SELECT prod_id, unit_price 
+FROM PRODUCT_COPY 
+WHERE prod_id = 3;
+
+-- this UPDATE names the VIEW, not the table
+--changes the price of 3 to 13.99 
+UPDATE CHEAP_PRODUCTS
+SET unit_price = 13.99 
+WHERE prod_id = 3;
+
+-- after
+--creates a view of product 3 price after the update
+SELECT prod_id, unit_price 
+FROM PRODUCT_COPY 
+WHERE prod_id = 3;
+
+-- --created a table through the view that counts the number of products and sums their prices 
+-- CREATE VIEW PRICE_SUMMARY AS
+-- SELECT COUNT(*) AS n, SUM(unit_price) AS total
+-- FROM PRODUCT_COPY;
+
+--tests price summary view
+-- UPDATE PRICE_SUMMARY SET total = 99;
